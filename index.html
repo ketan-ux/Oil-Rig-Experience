@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#070a12">
-<title>PELICAN-9 · Storm Shift — Offshore Rig Pixel Diorama</title>
+<title>PELICAN-9 Storm Shift</title>
 <style>
-:root{--bg:rgba(12,16,26,.84);--bg2:rgba(20,27,41,.92);--bd:rgba(255,255,255,.18);--tx:#e8ecea;--dim:#8e9aa6;--amber:#ffb347;--cyan:#4fc4c0;--red:#d83a34;--green:#7ed957;--yel:#f7c948;
+:root{color-scheme:dark;--bg:rgba(12,16,26,.84);--bg2:rgba(20,27,41,.92);--bd:rgba(255,255,255,.18);--tx:#e8ecea;--dim:#8e9aa6;--amber:#ffb347;--cyan:#4fc4c0;--red:#d83a34;--green:#7ed957;--yel:#f7c948;
 --f:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,"Courier New",monospace;--sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px);--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;background:#070a12;color:var(--tx);font:12px/1.4 var(--f);-webkit-user-select:none;user-select:none;touch-action:none;overscroll-behavior:none}
@@ -1765,7 +1765,7 @@ let SLOT_ST, SPOTS;
 const ROT = V3(DX, DF, DZ);
 function initCrewData() {
   SLOT_ST = [V3(DX - 0.62, DF, DZ + 0.3), V3(DX + 0.62, DF, DZ + 0.3), NAV.craneB.p.clone(), V3(5.0, MD, 2.7), V3(2.05, MD, 3.5), V3(3.1, MD, 2.7), POI.gTank.clone(), POI.mastBox.clone(),
-    V3(6.9, MD, 7.0), V3(5.9, MD, 6.9), V3(-6.45, MD, 1.15), V3(-7.2, MD, 2.15), POI.spool.clone(), POI.mastBox.clone().add(V3(0.05, 0, 0.5)), V3(1.5, LD, 2.0), POI.fish.clone()];
+    V3(6.9, MD, 7.0), V3(5.9, MD, 6.9), V3(-6.45, MD, 1.15), V3(-7.2, MD, 2.15), POI.spool.clone(), POI.mastBox.clone().add(V3(0.05, 0, 0.5)), POI.lab.clone(), POI.fish.clone()];
   const sp = (x, z, yaw, anim) => ({ p: V3(x, MD, z), yaw, anim, by: null });
   SPOTS = [sp(-4.15, -5.27, 0, 'sitSip'), sp(-3.75, -5.27, 0, 'sitTalk'), sp(-3.35, -5.27, 0, 'sit'), sp(-4.15, -4.43, PI, 'sitTalk'), sp(-3.75, -4.43, PI, 'sitSip'), sp(-3.35, -4.43, PI, 'sit'),
     sp(-5.6, -3.52, 0, 'windowWatch'), sp(-2.8, -3.52, 0, 'windowWatch'), sp(-2.75, -5.62, PI, 'standSip'), sp(-2.62, -4.9, PI / 2, 'radio'), sp(-4.82, -3.78, 0, 'idle'), sp(-5.25, -4.7, PI / 2, 'standSip'),
@@ -1802,7 +1802,7 @@ function stepMove(w, dt) {
 function seq(w, steps, dt) {                         // looping job routine: walk to each spot, face it, play the action
   const r = w.rt; if (r.steps !== steps) { r.steps = steps; r.i = r.i0 !== undefined ? r.i0 % steps.length : 0; r.t = 0; r.on = false; }
   const s = steps[r.i], p = w.root.position;
-  if (s.at) { const tp = typeof s.at === 'function' ? s.at(w) : s.at; if (dist2(p, tp) > 0.06 || Math.abs(p.y - tp.y) > 0.08) { if (!w.mv) (s.nav ? navTo : moveTo)(w, tp, s.sp || 1.0, s.wa || 'walk'); return; } }
+  if (s.at) { const tp = typeof s.at === 'function' ? s.at(w) : s.at; if (dist2(p, tp) > 0.06 || Math.abs(p.y - tp.y) > 0.08) { if (!w.mv) { if (s.wR !== undefined) setTool(w, 'R', s.wR); (s.nav ? navTo : moveTo)(w, tp, s.sp || 1.0, s.wa || 'walk'); } return; } }
   if (!r.on) { r.on = true; r.dur = Array.isArray(s.d) ? rnd(s.d[0], s.d[1]) : s.d; if (s.R !== undefined) setTool(w, 'R', s.R); if (s.L !== undefined) setTool(w, 'L', s.L); if (s.on) s.on(w); }
   w.anim = s.a; if (s.face !== undefined) faceTo(w, typeof s.face === 'function' ? s.face(w) : s.face); if (s.tick) s.tick(w, dt, r.t);
   r.t += dt; if (r.t >= r.dur) { r.t = 0; r.on = false; if (s.off) s.off(w); r.i = (r.i + 1) % steps.length; }
@@ -1814,7 +1814,7 @@ function weldFx(w, dt, heavy = 1) {
   const i = w.slot === 5 ? 1 : 0, tool = w.tools.Rtorch; if (!tool) return; _v4.copy(TORCH_TIP); tool.localToWorld(_v4);
   const on = Math.sin(W.time * 37 + i * 9) > -0.55 ? 1 : 0;
   if (on && Math.random() < dt * 34 * heavy) sparks.spawn(_v4.x, _v4.y, _v4.z, rnd(-1.3, 1.3), rnd(0.6, 2.6), rnd(-1.3, 1.3), rnd(0.25, 0.6), rnd(0.02, 0.045), Math.random() < 0.6 ? 0xdff8ff : 0xffb347);
-  lights.weld[i].position.copy(_v4).y += 0.1; lights.weld[i].intensity = on * rnd(9, 22) * heavy; w.arc = on * heavy;
+  lights.weld[i].position.copy(_v4).y += 0.1; lights.weld[i].intensity = on * rnd(2.2, 5.5) * heavy; w.arc = on * heavy;
 }
 const cookFx = { line: null, bob: null, boot: null, t: 0 };
 const WORK = {
@@ -1869,7 +1869,8 @@ function initRoutines() {
     bosunStorm: [{ at: POI.lashA, nav: 1, sp: 0.8, wa: 'stormWalk', face: V3(6.2, MD, 2.4), a: 'ratchet', d: [5, 7], L: null }, { a: 'brace', d: [2, 3] }, { at: POI.lashB, sp: 0.8, wa: 'stormWalk', face: V3(6.2, MD, 3.7), a: 'tugCheck', d: 4 }, { at: POI.barrels, nav: 1, sp: 0.8, wa: 'stormWalk', face: V3(4.8, MD, 5.4), a: 'ratchet', d: 5 }, { a: 'brace', d: 2 }],
     elec: [{ at: SLOT_ST[13], nav: 1, face: V3(-5.88, MD, 2.9), a: 'kneelBox', d: [5, 8], L: null }, { a: 'panel', d: 3, L: 'flash' }, { at: POI.breaker, nav: 1, face: V3(-3.6, MD, -3.2), a: 'panel', d: [5, 7] }, { at: POI.padBox, nav: 1, face: V3(7.15, MD, 6.35), a: 'panel', d: 5 }],
     elecStorm: [{ at: POI.breaker, nav: 1, sp: 0.8, wa: 'stormWalk', face: V3(-3.6, MD, -3.2), a: 'panel', d: [6, 9], L: 'flash' }, { a: 'brace', d: 2 }, { at: SLOT_ST[13], nav: 1, sp: 0.8, wa: 'stormWalk', face: V3(-5.88, MD, 2.9), a: 'kneelBox', d: 6 }, { a: 'brace', d: 2 }],
-    mud: [{ at: SLOT_ST[14], face: V3(1.5, LD, 1.2), a: 'sampleMud', d: [6, 8], R: 'cup' }, { at: POI.pit, face: V3(3.8, LD, 3.05), a: 'stir', d: [5, 7] }, { at: V3(1.2, LD, 4.1), a: 'idle', d: 0.2 }, { at: POI.lab, face: V3(0.2, LD, 6.25), a: 'cookStir', d: 4, R: null }, { at: V3(1.2, LD, 4.1), a: 'idle', d: 0.2 }, { at: V3(2.4, LD, 4.15), face: V3(2.62, LD, 4.15), a: 'turnValve', d: 3 }, { at: V3(1.2, LD, 3.4), a: 'idle', d: 0.2, R: 'cup' }],
+    mud: [{ at: POI.lab, face: V3(0.2, LD, 6.25), a: 'cookStir', d: [5, 7], R: null }, { a: 'writeClip', d: 2.2 }, { at: POI.sacks, face: V3(3.6, LD, 5.9), a: 'tugCheck', d: 2.4 }, { at: V3(2.78, LD, 4.8), wR: 'box', wa: 'carry', face: V3(2.0, LD, 4.8), a: 'turnValve', d: 3, R: null },
+      { at: V3(1.5, LD, 2.0), face: V3(1.5, LD, 1.2), a: 'sampleMud', d: [6, 8], R: 'cup' }, { at: POI.pit, face: V3(3.8, LD, 3.05), a: 'stir', d: [5, 7] }, { at: V3(2.4, LD, 4.15), face: V3(2.62, LD, 4.15), a: 'turnValve', d: 3, R: null }, { at: V3(1.3, LD, 4.3), a: 'idle', d: 0.2 }],
     cook: [{ at: SLOT_ST[15], face: V3(-0.95, MD, 9), a: 'fishing', d: [9, 14], R: 'rod', tick: cookTick, off: w => { w.fishJerk = 0; } }, { a: 'standSip', d: 5, R: 'mug' }, { a: 'toss', d: 2.4, R: null, face: V3(-1.75, MD, 7.5), on: () => { gerald.hop = 1; emote(gerald.g, EMO.fish, 1.6, 0.3); } }]
   };
   cookFx.line = boxM(C.pale, 0.006, 1, 0.006); cookFx.line.castShadow = false; cookFx.line.visible = false; scene.add(cookFx.line);
@@ -2535,7 +2536,16 @@ function updateExploreCam(dt) {
   const want = APP.focus ? hotPos(APP.focus, _v3) : camHome, k = 1 - Math.exp(-(APP.focus ? 5 : 2.5) * dt);
   _v4.subVectors(want, controls.target).multiplyScalar(k); controls.target.add(_v4); cam.position.add(_v4);
   if (APP.autoZoom) { cam.zoom = damp(cam.zoom, APP.zoomT, 2.6, dt); cam.updateProjectionMatrix(); if (Math.abs(cam.zoom - APP.zoomT) < 0.02) APP.autoZoom = false; }
-  APP.idleT += dt; controls.autoRotate = $('ckOrbit').checked && (APP.state !== 'explore' || APP.idleT > 3.5); controls.autoRotateSpeed = APP.focus ? 1.1 : APP.state === 'menu' ? 0.9 : 0.55;
+  // anything under the main deck is viewed from a low angle through the nearest open side, otherwise it would be hidden
+  const under = !!APP.focus && want.y < MD - 0.3 && want.y > LD - 0.2 && Math.abs(want.x) < 7.4 && Math.abs(want.z) < 7.4;
+  if (under !== APP.under) { APP.under = under; APP.autoAim = true; }
+  if (APP.autoAim) {
+    _v1.subVectors(cam.position, controls.target); const r = _v1.length(); let th = Math.atan2(_v1.x, _v1.z), ph = Math.acos(clamp(_v1.y / r, -1, 1));
+    const thT = under ? (Math.abs(want.x) > Math.abs(want.z) ? (want.x > 0 ? PI / 2 : -PI / 2) : (want.z > 0 ? 0 : PI)) + 0.22 : th, phT = under ? 1.36 : PI / 2 - ISO_PITCH;
+    th = dampAng(th, thT, 3, dt); ph = damp(ph, phT, 3, dt); cam.position.set(controls.target.x + r * Math.sin(ph) * Math.sin(th), controls.target.y + r * Math.cos(ph), controls.target.z + r * Math.sin(ph) * Math.cos(th));
+    if (Math.abs(ph - phT) < 0.01 && Math.abs(angDiff(th, thT)) < 0.01) APP.autoAim = false;
+  }
+  APP.idleT += dt; controls.autoRotate = !under && $('ckOrbit').checked && (APP.state !== 'explore' || APP.idleT > 3.5); controls.autoRotateSpeed = APP.focus ? 1.1 : APP.state === 'menu' ? 0.9 : 0.55;
   controls.update();
   // markers: little amber diamonds over everything tappable
   const mk = markers.mesh, on = APP.state === 'explore' && GFX.markers && !APP.focus; mk.visible = on;
@@ -2624,7 +2634,7 @@ function initUI() {
   click('resRetry', () => startGame(APP.role)); click('resNext', () => { leavePlay(); setState('roles'); }); click('resMenu', () => { leavePlay(); setState('menu'); });
   // canvas: tap vs drag
   let down = null;
-  canvas.addEventListener('pointerdown', e => { AUDIO.init(); APP.idleT = 0; down = { x: e.clientX, y: e.clientY, t: performance.now() }; if (APP.state === 'attract') { /* handled on release */ } });
+  canvas.addEventListener('pointerdown', e => { AUDIO.init(); APP.idleT = 0; APP.autoAim = false; down = { x: e.clientX, y: e.clientY, t: performance.now() }; if (APP.state === 'attract') { /* handled on release */ } });
   canvas.addEventListener('pointermove', () => { if (down) APP.idleT = 0; });
   canvas.addEventListener('wheel', () => { APP.autoZoom = false; APP.idleT = 0; }, { passive: true });
   canvas.addEventListener('touchstart', e => { if (e.touches.length > 1) APP.autoZoom = false; }, { passive: true });
@@ -2662,7 +2672,7 @@ function banner(txt, small, danger, secs = 4) { const b = $('banner'); b.innerHT
 let ROLES, ROLE_BY_KEY = {};
 function initRoles() {
   const weldPt = [V3(2.05, MD + 0.32, 3.0), V3(-1.45, LD + 0.6, 1.95)];
-  const weldTick = i => () => { const p = weldPt[i]; for (let k = 0; k < 2; k++) sparks.spawn(p.x, p.y, p.z, rnd(-1.4, 1.4), rnd(0.6, 2.6), rnd(-1.4, 1.4), rnd(0.25, 0.6), rnd(0.02, 0.045), Math.random() < 0.6 ? 0xdff8ff : 0xffb347); lights.weld[0].position.copy(p).y += 0.12; lights.weld[0].intensity = rnd(10, 24); FP.arc = 1; FP.visor = 1; };
+  const weldTick = i => () => { const p = weldPt[i]; for (let k = 0; k < 2; k++) sparks.spawn(p.x, p.y, p.z, rnd(-1.4, 1.4), rnd(0.6, 2.6), rnd(-1.4, 1.4), rnd(0.25, 0.6), rnd(0.02, 0.045), Math.random() < 0.6 ? 0xdff8ff : 0xffb347); lights.weld[0].position.copy(p).y += 0.12; lights.weld[0].intensity = rnd(3, 7); FP.arc = 1; FP.visor = 1; };
   const weldEnd = () => { lights.weld[0].intensity = 0; FP.arc = 0; FP.visor = 0; };
   ROLES = [
     { key: 'roughneck', slot: 0, title: 'Derrick Roughneck', storm: false, diff: 2, look: 'roughneck', start: [DX, MD, 1.9, 0],
@@ -2807,7 +2817,7 @@ function updateVm(dt, t) {
   else if (FP.brace) { rx = 0.07; lx = -0.07; ry = -0.1; ly = -0.07; rrx = 1.0; lrx = 1.05; rry = 0.9; lry = -0.9; }
   else if (working) {
     const ty = mg.type;
-    if (ty === 'crank') { rx = 0.1 + Math.cos(FP.crankA) * 0.06; ry = -0.2 + Math.sin(FP.crankA) * 0.06; lx = -0.1 + Math.cos(FP.crankA) * 0.06; ly = -0.21 + Math.sin(FP.crankA) * 0.06; rz = lz = -0.4; rrx = lrx = 0.4; }
+    if (ty === 'crank') { rx = 0.17 + Math.cos(FP.crankA) * 0.05; ry = -0.26 + Math.sin(FP.crankA) * 0.05; lx = -0.17 + Math.cos(FP.crankA) * 0.05; ly = -0.27 + Math.sin(FP.crankA) * 0.05; rz = lz = -0.4; rrx = lrx = 0.22; }
     else if (ty === 'seq') { const d = FP.sigT > 0 ? FP.sig : -1; ry = d === 0 ? 0.0 : d === 2 ? -0.28 : -0.17; ly = d === 0 ? 0.0 : d === 2 ? -0.28 : -0.17; rx = d === 3 ? 0.36 : 0.22; lx = d === 1 ? -0.36 : -0.22; rrx = lrx = d === 0 ? 1.2 : 0.6; }
     else { ry = -0.2 + Math.sin(t * 19) * 0.004; ly = -0.22; rz = -0.42; lz = -0.38; rry = 0.4; lry = -0.4; rrx = lrx = 0.35; }
   }
@@ -2874,7 +2884,7 @@ function setupGame(r) {
   setOceanMode(true); scene.fog = fog; activeCam = fpCam; pixelPass.camera = fpCam; skyU.uMode.value = 1; markers.mesh.visible = false; vm.g.visible = true; sky.scale.setScalar(900);
   Object.assign(FP, { yaw: r.start[3], pitch: 0, carry: null, tether: -1, brace: false, visor: 0, arc: 0, edgeT: 0, wet: 0, spill: 0, shake: 0, strike: 0, speed: 0, washHit: false }); FP.pos.set(r.start[0], r.start[1], r.start[2]); FP.gy = r.start[1];
   setVmRole(r.look); if (r.setup) r.setup(g);
-  g.tasks = r.tasks.map(t => Object.assign({}, t, { fin: false })); const b = roleBudget(r); g.warn = b.warn; g.ramp = b.ramp;
+  g.tasks = r.tasks.map(t => Object.assign({}, t, { fin: false })); const b = roleBudget(r); g.warn = g.warn0 = b.warn; g.ramp = b.ramp; g.listT = -1;
   if (g.tasks[0].pre) g.tasks[0].pre(g);
   gp.anch.visible = r.storm; gp.lamp.intensity = 0; show($('tether'), r.storm); show($('prompt'), false); show($('mg'), false); $('fc').classList.remove('warn'); $('radio').classList.remove('on');
   refreshTasks(); banner(r.title.toUpperCase(), r.storm ? 'Cat-5 inbound in ' + fmtTime(b.warn + b.ramp) + ' · stay clipped to the yellow posts' : 'Storm front in ' + fmtTime(b.warn + b.ramp) + ' · finish the list, then get to the shelter', false, 5);
@@ -2890,15 +2900,15 @@ function pauseGame(on, silent) { if (!GAME.on) return; GAME.paused = on; show($(
 function endGame(kind) {
   const g = GAME, r = g.role; if (kind === 'quit') { leavePlay(); setState('menu'); return; }
   if (g.over) return; g.over = true; g.mg = null; if (document.pointerLockElement) document.exitPointerLock();
-  const total = g.tasks.length - 1, done = Math.min(total, g.tasks.filter((t, i) => t.fin && i < total).length), left = g.warn + g.ramp - g.t;
+  const total = g.tasks.length - 1, done = Math.min(total, g.tasks.filter((t, i) => t.fin && i < total).length), left = g.listT >= 0 ? g.warn0 - g.listT : -1;
   let stars = 0, title, quip; const days = store.get('days', 0);
-  if (kind === 'win') { stars = left > 12 ? 3 : 2; title = 'SHIFT COMPLETE'; quip = pick(['Dry, fed and accounted for. The toolpusher almost smiled.', 'Textbook. Gasket has approved your timesheet.', 'Biscuit is cutting you the corner piece.']); store.set('days', days + 1); AUDIO.jingle(true); for (const w of crew) if (w.state === 'inside' && Math.random() < 0.6) { w.anim = 'cheer'; emote(w.root, EMO.heart, 3, 0.9); } }
+  if (kind === 'win') { stars = left > 0 ? 3 : 2; title = 'SHIFT COMPLETE'; quip = pick(['Dry, fed and accounted for. The toolpusher almost smiled.', 'Textbook. Gasket has approved your timesheet.', 'Biscuit is cutting you the corner piece.']); store.set('days', days + 1); AUDIO.jingle(true); for (const w of crew) if (w.state === 'inside' && Math.random() < 0.6) { w.anim = 'cheer'; emote(w.root, EMO.heart, 3, 0.9); } }
   else if (kind === 'partial') { stars = done >= total / 2 ? 1 : 0; title = 'SAFE… BUT'; quip = 'You made the shelter with ' + (total - done) + ' job' + (total - done > 1 ? 's' : '') + ' still on the list. The toolpusher would like “a word”.'; AUDIO.jingle(false); }
   else if (kind === 'caught') { title = 'CAUGHT ON DECK'; quip = 'Hildur hauled you in by the harness, soaked to the socks. You owe her a pie.'; store.set('days', 0); AUDIO.jingle(false); }
   else { title = 'MAN OVERBOARD'; quip = 'The scout fished you out with the searchlight in your eyes. The paperwork will be extensive.'; store.set('days', 0); AUDIO.splash(FP.pos, 1.5); AUDIO.jingle(false); }
   setIncidentSign(store.get('days', 0)); const best = store.get('best_' + r.key, null); if (best === null || stars > best) store.set('best_' + r.key, stars);
   $('resT').textContent = title; $('resT').className = kind === 'win' ? 'gn' : kind === 'partial' ? 'amb' : 'rd'; $('resStars').textContent = '★'.repeat(stars) + '☆'.repeat(3 - stars); $('resQ').textContent = quip;
-  $('resStats').innerHTML = `<div class="stat"><span>ROLE</span><span>${r.title}</span></div><div class="stat"><span>JOBS DONE</span><span>${done} / ${total}</span></div><div class="stat"><span>${left >= 0 ? 'TIME TO SPARE' : 'OVERTIME IN THE STORM'}</span><span>${fmtTime(Math.abs(left))}</span></div><div class="stat"><span>DAYS WITHOUT INCIDENT</span><span>${store.get('days', 0)}</span></div>`;
+  $('resStats').innerHTML = `<div class="stat"><span>ROLE</span><span>${r.title}</span></div><div class="stat"><span>JOBS DONE</span><span>${done} / ${total}</span></div><div class="stat"><span>LIST FINISHED</span><span>${g.listT < 0 ? 'not this time' : left > 0 ? fmtTime(left) + ' before the horn' : fmtTime(-left) + ' after the horn'}</span></div><div class="stat"><span>DAYS WITHOUT INCIDENT</span><span>${store.get('days', 0)}</span></div>`;
   setState('result');
 }
 function refreshTasks() {
@@ -2911,7 +2921,7 @@ function nextTask() {
   const g = GAME, t = g.tasks[g.ti]; if (t.end) t.end(g); if (t.done) t.done(g); t.fin = true; g.mg = null; g.ti++; show($('mg'), false); AUDIO.pickup(); FP.strike = 0;
   const n = g.tasks[g.ti]; if (n && n.pre) n.pre(g); if (n && n.tool) setVmTool('R', n.tool); else if (t.tool) setVmTool('R', vm.roleTool || null);
   refreshTasks();
-  if (n && n.type === 'shelter' && g.phase === 'work' && g.t < g.warn - 5) { g.warn = g.t + 5; banner('LIST DONE — AND HERE COMES THE FRONT', 'Get to the storm shelter', false, 4); }
+  if (n && n.type === 'shelter') { g.listT = g.t; if (g.phase === 'work' && g.t < g.warn - 5) { g.warn = g.t + 5; banner('LIST DONE — AND HERE COMES THE FRONT', 'Get to the storm shelter', false, 4); } }
 }
 function startMg(t) {
   const m = { type: t.type, p: 0, hits: 0, x: Math.random(), dir: 1, zone: [0.4, 0.6], round: 0, i: 0, arr: [], showT: 0, wait: '', rep: 0, held: false };
@@ -3112,7 +3122,7 @@ function frame(now) {
   next();
 })();
 // tiny debug handle (handy in the console: P9.W.speed = 4, P9.snap(2) …)
-window.P9 = { W, APP, GAME, FP, GFX, OV, crew, snap(s) { snapWeather(s); snapCrew(); snapBoat(); snapHelis(); }, setState, startGame, get scout() { return scout; }, get pax() { return pax; }, boat, cam, controls, setFocus, HOT };
+window.P9 = { W, APP, GAME, FP, GFX, OV, KEYS, ANCHORS, crew, get crane() { return crane; }, snap(s) { snapWeather(s); snapCrew(); snapBoat(); snapHelis(); }, setState, startGame, get scout() { return scout; }, get pax() { return pax; }, boat, cam, controls, setFocus, HOT };
 
 </script>
 <script>setTimeout(function(){if(!window.__p9){var m=document.getElementById('loadMsg');if(m&&/RIGGING/.test(m.textContent))m.textContent='STILL FETCHING THREE.JS FROM THE CDN — CHECK YOUR CONNECTION';}},7000);</script>
