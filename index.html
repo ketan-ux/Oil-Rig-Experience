@@ -29,7 +29,7 @@ h1,h2,h3{margin:0;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
 #vig:before{top:0}#vig:after{bottom:0}
 #vig.bars:before,#vig.bars:after{height:6vh}
 /* close button */
-#btnX{position:fixed;top:calc(12px + var(--st));left:calc(12px + var(--sl));z-index:30;width:34px;height:34px;padding:0;font-size:16px;line-height:1;background:var(--bg);border:1px solid var(--bd);box-shadow:3px 3px 0 rgba(0,0,0,.5)}
+#btnX{position:fixed;top:calc(12px + var(--st));left:calc(12px + var(--sl));z-index:45;width:34px;height:34px;padding:0;font-size:16px;line-height:1;background:var(--bg);border:1px solid var(--bd);box-shadow:3px 3px 0 rgba(0,0,0,.5)}
 /* attract */
 #attract{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:7vh 16px 9vh;pointer-events:none;text-align:center}
 #attract .logo{font-size:clamp(28px,7vw,64px);letter-spacing:.2em;color:#fff;text-shadow:3px 3px 0 #b8431f,6px 6px 0 #141b29}
@@ -174,6 +174,10 @@ body.touch.playing #touch{display:block}
 #loading .bar b{display:block;height:100%;width:0;background:var(--amber);transition:width .2s}
 #loading small{letter-spacing:.05em;color:var(--dim);max-width:520px;line-height:1.6}
 @media (max-width:560px){#tasks{font-size:9.5px;width:46vw}#fc{width:calc(100vw - 110px);left:calc(54px + var(--sl));transform:none}}
+@media (max-height:480px){#tasks{width:min(230px,38vw);top:calc(52px + var(--st));padding:5px 8px}#tasks div:not(.cur){display:none}#banner{top:15%;font-size:12px;padding:6px 12px}#mg{bottom:calc(8px + var(--sb));width:min(300px,44vw);padding:6px 9px}#mgT{margin-bottom:4px;font-size:10.5px}#prompt{top:62%;font-size:11px}
+#fc{width:min(300px,calc(100vw - 280px))}.tb{width:52px;height:52px}#tAct{width:68px;height:68px;bottom:calc(40px + var(--sb))}#tClip{right:calc(98px + var(--sr));bottom:calc(20px + var(--sb))}#tRun{right:calc(96px + var(--sr));bottom:calc(82px + var(--sb))}#tBrace{right:calc(28px + var(--sr));bottom:calc(118px + var(--sb))}#joy{width:104px;height:104px;bottom:calc(18px + var(--sb))}
+#radio{bottom:auto;top:calc(44px + var(--st));font-size:10px}#menu .box{padding:10px 14px}#menu .mbtn{margin:4px 0;padding:7px 10px}#menu .sub{margin-bottom:8px}#focusCard{padding:8px 10px}#focusCard p{display:none}}
+@media (max-width:480px){#rsCard ol{columns:1}#roleSel .arrow{top:30%}#mg{bottom:calc(200px + var(--sb))}#banner{top:16%}#tether{font-size:9.5px}#hudPanel{width:210px}}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
@@ -752,8 +756,10 @@ function seaNormal(x, z, out = _seaN) { // analytic surface normal at rest coord
 
 const oceanMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradTex });
 const oceanMesh = new THREE.Mesh(new THREE.BufferGeometry(), oceanMat); oceanMesh.receiveShadow = true; oceanMesh.frustumCulled = false; scene.add(oceanMesh);
-const wallMat = new THREE.MeshBasicMaterial({ color: C.teal, transparent: true, opacity: 0.72, depthWrite: false, side: THREE.DoubleSide });
+const wallMat = new THREE.MeshBasicMaterial({ color: C.teal, transparent: true, opacity: 0.72, depthWrite: false });
 const wallMesh = new THREE.Mesh(new THREE.BufferGeometry(), wallMat); wallMesh.frustumCulled = false; wallMesh.layers.set(1); wallMesh.renderOrder = 2; scene.add(wallMesh);
+// opaque inner faces of the far walls, so a sight-line through the block always ends on water rather than sky
+const wallBack = new THREE.Mesh(wallMesh.geometry, new THREE.MeshBasicMaterial({ color: C.dteal, side: THREE.BackSide })); wallBack.frustumCulled = false; wallBack.layers.set(1); scene.add(wallBack);
 let oN = 0, oPos, oNor, oCol, oRx, oRz, oMx, oMz, oFade, oLegR, oLegF, wPos;
 
 function buildOcean(seg) {
@@ -775,11 +781,11 @@ function buildOcean(seg) {
     const x = s === 0 ? u : s === 1 ? SEA_H : s === 2 ? u : -SEA_H, z = s === 0 ? -SEA_H : s === 1 ? u : s === 2 ? SEA_H : u;
     wPos[o] = x; wPos[o + 1] = 0; wPos[o + 2] = z; wPos[o + 3] = x; wPos[o + 4] = -SEA_DEPTH; wPos[o + 5] = z;
     const nx = sides[s][3], nz = sides[s][4]; wNor[o] = nx; wNor[o + 2] = nz; wNor[o + 3] = nx; wNor[o + 5] = nz;
-    if (i < seg) { const a = (s * N + i) * 2, b = a + 1, c = a + 2, d = a + 3; if (s === 0 || s === 3) { wIdx[q++] = a; wIdx[q++] = c; wIdx[q++] = b; wIdx[q++] = b; wIdx[q++] = c; wIdx[q++] = d; } else { wIdx[q++] = a; wIdx[q++] = b; wIdx[q++] = c; wIdx[q++] = b; wIdx[q++] = d; wIdx[q++] = c; } }
+    if (i < seg) { const a = (s * N + i) * 2, b = a + 1, c = a + 2, d = a + 3; if (s === 0 || s === 1) { wIdx[q++] = a; wIdx[q++] = c; wIdx[q++] = b; wIdx[q++] = c; wIdx[q++] = d; wIdx[q++] = b; } else { wIdx[q++] = a; wIdx[q++] = b; wIdx[q++] = c; wIdx[q++] = c; wIdx[q++] = b; wIdx[q++] = d; } }   // wound so every side faces outward
   }
   const wg = new THREE.BufferGeometry();
   wg.setAttribute('position', new THREE.BufferAttribute(wPos, 3)); wg.setAttribute('normal', new THREE.BufferAttribute(wNor, 3)); wg.setIndex(new THREE.BufferAttribute(wIdx, 1));
-  wallMesh.geometry.dispose(); wallMesh.geometry = wg;
+  wallMesh.geometry.dispose(); wallMesh.geometry = wg; wallBack.geometry = wg;
   setOceanMode(seaState.open);
 }
 function setOceanMode(open) { // diorama tile (28×28, hard edges) ↔ open sea for first person (warped grid out to ±110, amplitude fades to a flat horizon)
@@ -795,7 +801,7 @@ function setOceanMode(open) { // diorama tile (28×28, hard edges) ↔ open sea 
     oFade[a] = open ? 1 - smooth(55, 108, Math.max(Math.abs(x), Math.abs(z))) : 1;
     for (let l = 0; l < 4; l++) { const r = Math.hypot(x - LEGS[l][0], z - LEGS[l][1]); oLegR[a * 4 + l] = r; oLegF[a * 4 + l] = Math.exp(-r * RIP_F); }
   }
-  wallMesh.visible = !open; farSea.visible = open; plinth.visible = !open;
+  wallMesh.visible = wallBack.visible = !open; farSea.visible = open; plinth.visible = !open;
 }
 const farSea = sub(() => { const s = 2200, e = 110, y = -0.02; bx(C.white, s, 0.02, s - e, 0, y, -(s + e) / 2); bx(C.white, s, 0.02, s - e, 0, y, (s + e) / 2); bx(C.white, s - e, 0.02, e * 2, -(s + e) / 2, y, 0); bx(C.white, s - e, 0.02, e * 2, (s + e) / 2, y, 0); }, new THREE.MeshToonMaterial({ color: 0xffffff, vertexColors: true, gradientMap: gradTex }), false);
 farSea.visible = false; scene.add(farSea);
@@ -863,7 +869,7 @@ function updateOcean() {
       wPos[(3 * N + i) * 6 + 1] = oPos[(i * N) * 3 + 1];                     // west edge
     }
     wallMesh.geometry.attributes.position.needsUpdate = true;
-    wallMat.color.copy(seaCol.tr).lerp(seaCol.cr, 0.25).multiplyScalar(0.8);
+    wallMat.color.copy(seaCol.tr).lerp(seaCol.cr, 0.25).multiplyScalar(0.8); wallBack.material.color.copy(seaCol.tr).multiplyScalar(0.62);
   } else farSea.material.color.copy(seaCol.tr).lerp(seaCol.cr, 0.5);
 }
 
@@ -1328,8 +1334,8 @@ function buildDynamics() {
   lights.flare = new THREE.PointLight(0xff9a3c, 70, 34, 1.7); lights.flare.position.copy(POI.flare).add(V3(0, 0.8, 0)); scene.add(lights.flare);
   lights.door = new THREE.PointLight(0xffb347, 0, 7, 1.6); lights.door.position.set(-4.2, MD + 1.0, -2.7); scene.add(lights.door);
   lights.inside = new THREE.PointLight(0xffc37a, 6, 6.5, 1.4); lights.inside.position.set(-3.9, MD + 0.95, -4.7); scene.add(lights.inside);
-  lights.deckA = new THREE.PointLight(0xffc98a, 0, 17, 1.5); lights.deckA.position.set(-2.5, MD + 2.6, 2.2); scene.add(lights.deckA);
-  lights.deckB = new THREE.PointLight(0xffc98a, 0, 17, 1.5); lights.deckB.position.set(4.2, MD + 2.6, 0.5); scene.add(lights.deckB);
+  lights.deckA = new THREE.PointLight(0xffc98a, 0, 12.5, 1.5); lights.deckA.position.set(-2.5, MD + 2.6, 2.2); scene.add(lights.deckA);
+  lights.deckB = new THREE.PointLight(0xffc98a, 0, 12.5, 1.5); lights.deckB.position.set(4.2, MD + 2.6, 0.5); scene.add(lights.deckB);
   lights.lower = new THREE.PointLight(0xffd9a0, 5, 13, 1.4); lights.lower.position.set(0.5, MD - 0.5, 2.5); scene.add(lights.lower);
   lights.weld = [0, 1].map(() => { const l = new THREE.PointLight(0xbff4ff, 0, 7, 1.8); scene.add(l); return l; });
   // gauges: dial + live needle
@@ -1377,7 +1383,7 @@ function updateRigDynamics(dt, t) {
   LEGS.forEach(([lx, lz], i) => { const m = legFoam[i]; m.position.y = seaY(lx, lz) + 0.02; const s = 1 + Math.sin(t * 2.2 + i * 1.6) * 0.07 + W.wave * 0.16; m.scale.set(s, s, 1 + W.wave); m.visible = !seaState.open || true; });
   // emissive states
   const dk = sat(W.dark * 1.15 - 0.15), on = 1 - W.lightsOut, flick = W.lightsOut > 0.5 ? 0 : 1;
-  lampMat.color.setHex(0x45556c).lerp(_c1.setHex(0xffe9b0), dk * on); lights.deckA.intensity = lights.deckB.intensity = dk * on * 42; lights.lower.intensity = (1.6 + dk * 7) * on;
+  lampMat.color.setHex(0x45556c).lerp(_c1.setHex(0xffe9b0), dk * on); lights.deckA.intensity = lights.deckB.intensity = dk * on * 38; lights.lower.intensity = (1.6 + dk * 7) * on;
   const occ = sat(W.shelterFrac * 1.4), glow = Math.max(occ, dk * 0.5) * (W.lightsOut ? 0.12 : 1);
   winMat.color.setHex(0x1f2a3d).lerp(_c1.setHex(0xffb347), glow); glassMat.opacity = 0.12 + glow * 0.5; glassMat.color.setHex(0x9bd8e8).lerp(_c1.setHex(0xffb347), glow);
   inLampMat.color.setHex(W.lightsOut ? 0x8a1f2b : 0xffe2b0); lights.inside.intensity = W.lightsOut ? 1.2 : 2.2 + glow * 3; lights.inside.color.setHex(W.lightsOut ? 0xff4030 : 0xffc37a); lights.door.intensity = glow * 9 * flick;
@@ -1939,7 +1945,8 @@ function updateWorker(w, dt, t) {
     w.rope[0].visible = w.rope[1].visible = !!a;
     if (a) { _v2.set(p.x, p.y + 0.34, p.z); _v3.addVectors(_v2, a).multiplyScalar(0.5); _v3.y -= 0.12 + (7 - Math.sqrt(bd)) * 0.035; _v3.x += W.windX * W.gust * 0.2; _v3.z += W.windZ * W.gust * 0.2; stretch(w.rope[0], _v2, _v3, 0.012); stretch(w.rope[1], _v3, a, 0.012); }
   }
-  poseWorker(w, dt);
+  w.root.visible = w.state !== 'inside' || APP.state === 'play' || APP.state === 'result' || cam.zoom > 2.5;   // skip drawing sheltered crew the wide diorama cannot see
+  if (w.root.visible) poseWorker(w, dt);
 }
 function updateCrew(dt, t) {
   const S = W.S;
@@ -3000,7 +3007,7 @@ function updatePlayer(dt, t) {
   const out = !FP.inside, wind = out ? (FP.cover ? W.wind * 0.45 : W.wind) : 0, sy = Math.sin(FP.yaw), cy0 = Math.cos(FP.yaw);
   let mx = (-sy * iz + cy0 * ix) * sp, mz = (-cy0 * iz - sy * ix) * sp;
   if (wind > 0.4 && im > 0.01) { const up = -(mx * W.windX + mz * W.windZ) / (Math.hypot(mx, mz) || 1); const f = 1 - 0.5 * sat((wind - 0.4) / 1.6) * Math.max(0, up); mx *= f; mz *= f; }
-  const push = (0.3 * Math.pow(Math.max(0, wind - 0.5), 1.5) + (wind > 0.6 ? W.gust * 1.5 : 0)) * (FP.brace ? 0.15 : 1) * (locked ? 0.3 : 1);
+  const push = (0.24 * Math.pow(Math.max(0, wind - 0.5), 1.5) + (wind > 0.6 ? Math.max(0, W.gust - 0.2) * 1.5 : 0)) * (FP.brace ? 0.12 : im < 0.05 ? 0.45 : 1) * (locked ? 0.25 : 1);
   mx += W.windX * push; mz += W.windZ * push;
   const ox = p.x, oz = p.z; fpMove(mx * dt, mz * dt, dt);
   // lifeline: clip / unclip / length limit
